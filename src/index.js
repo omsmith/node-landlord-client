@@ -52,6 +52,7 @@ LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
 
 				if ('object' !== typeof tenantInfo || !tenantInfo.hasOwnProperty('tenantId')) {
 					reject(new errors.TenantLookupFailed());
+					return;
 				}
 
 				var tenantId = tenantInfo.tenantId;
