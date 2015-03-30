@@ -62,5 +62,41 @@ LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
 	});
 };
 
+LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId) {
+	var self = this;
+
+	return new Promise(function (resolve, reject) {
+		if ('string' !== typeof tenantId) {
+			reject(new Error('tenantId must be a valid string'));
+		}
+
+		request
+			.get(self._landlord + '/v1/tenants/' + tenantId)
+			.set('Authorization', 'REDACTED-landlord-dev-key')
+			.end(function (err, res) {
+				if (err) {
+					if (res.status === 404) {
+						reject(new errors.TenantIdNotFound(tenantId));
+					} else {
+						reject(new errors.TenantLookupFailed(err));
+					}
+
+					return;
+				}
+
+				var tenantInfo = res.body;
+
+				if ('object' !== typeof tenantInfo || !tenantInfo.hasOwnProperty('domain')) {
+					reject(new errors.TenantLookupFailed());
+					return;
+				}
+
+				var host = tenantInfo.domain;
+
+				resolve(host);
+			});
+	});
+};
+
 module.exports = LandlordClient;
 module.exports.errors = errors;

@@ -10,6 +10,14 @@ function TenantNotFoundError (host) {
 }
 util.inherits(TenantNotFoundError, Error);
 
+function TenantIdNotFoundError (tenantId) {
+	this.name = 'TenantIdNotFoundError';
+	this.message = 'Tenant not found with id "' + tenantId + '"';
+
+	Error.captureStackTrace(this, this.constructor);
+}
+util.inherits(TenantIdNotFoundError, Error);
+
 function TenantLookupFailedError (inner) {
 	this.name = 'TenantLookupFailedError';
 	this.message = 'Tenant lookup failed';
@@ -25,5 +33,6 @@ util.inherits(TenantLookupFailedError, Error);
 
 module.exports = {
 	TenantNotFound: TenantNotFoundError,
+	TenantIdNotFound: TenantIdNotFoundError,
 	TenantLookupFailed: TenantLookupFailedError
 };
