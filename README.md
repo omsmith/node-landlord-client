@@ -50,6 +50,13 @@ String.
 
 ---
 
+#### `.lookupTenantHost(String TenantId)` -> `Promise<String>`
+
+Given the TenantId, will fetch the host (no protocol) from Landlord. Returns a
+Promise to a String.
+
+---
+
 #### `LandlordClient.errors` -> `Object`
 
 Provided as part of the export is an object containing the well-typed errors
