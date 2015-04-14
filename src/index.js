@@ -75,7 +75,7 @@ LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId)
 			.set('Authorization', 'REDACTED-landlord-dev-key')
 			.end(function (err, res) {
 				if (err) {
-					if (res.status === 404) {
+					if (res && res.status === 404) {
 						reject(new errors.TenantIdNotFound(tenantId));
 					} else {
 						reject(new errors.TenantLookupFailed(err));
