@@ -62,7 +62,9 @@ LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
 	});
 };
 
-function lookupTenantInfo (self, tenantId) {
+LandlordClient.prototype.lookupTenantHost = function lookupTenantInfo (tenantId) {
+	var self = this;
+
 	return new Promise(function (resolve, reject) {
 		if ('string' !== typeof tenantId) {
 			reject(new Error('tenantId must be a valid string'));
@@ -92,17 +94,17 @@ function lookupTenantInfo (self, tenantId) {
 				resolve(tenantInfo);
 			});
 	});
-}
+};
 
 LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId) {
-	return lookupTenantInfo(this, tenantId)
+	return this.lookupTenantInfo(tenantId)
 		.then(function (tenantInfo) {
 			return tenantInfo.domain;
 		});
 };
 
 LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri (tenantId) {
-	return lookupTenantInfo(this, tenantId)
+	return this.lookupTenantInfo(tenantId)
 		.then(function (tenantInfo) {
 			var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
 			return protocol + '://' + tenantInfo.domain + '/';
