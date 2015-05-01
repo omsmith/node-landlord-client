@@ -62,7 +62,7 @@ LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
 	});
 };
 
-LandlordClient.prototype.lookupTenantHost = function lookupTenantInfo (tenantId) {
+LandlordClient.prototype._lookupTenantHost = function lookupTenantInfo (tenantId) {
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
@@ -97,14 +97,14 @@ LandlordClient.prototype.lookupTenantHost = function lookupTenantInfo (tenantId)
 };
 
 LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId) {
-	return this.lookupTenantInfo(tenantId)
+	return this._lookupTenantInfo(tenantId)
 		.then(function (tenantInfo) {
 			return tenantInfo.domain;
 		});
 };
 
 LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri (tenantId) {
-	return this.lookupTenantInfo(tenantId)
+	return this._lookupTenantInfo(tenantId)
 		.then(function (tenantInfo) {
 			var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
 			return protocol + '://' + tenantInfo.domain + '/';
