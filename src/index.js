@@ -62,7 +62,7 @@ LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
 	});
 };
 
-LandlordClient.prototype._lookupTenantHost = function lookupTenantInfo (tenantId) {
+LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId) {
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
