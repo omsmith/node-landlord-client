@@ -50,6 +50,13 @@ String.
 
 ---
 
+#### `.lookupTenantUrl(String TenantId)` -> `Promise<String>`
+
+Given the TenantId, well fetch the base url from Landlord. Returns a Promise to
+a String.
+
+---
+
 #### `.lookupTenantHost(String TenantId)` -> `Promise<String>`
 
 Given the TenantId, will fetch the host (no protocol) from Landlord. Returns a
