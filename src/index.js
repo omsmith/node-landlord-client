@@ -91,6 +91,8 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId
 					return;
 				}
 
+				tenantInfo.domain = tenantInfo.domain.replace(/\/+$/g, '');
+
 				resolve(tenantInfo);
 			});
 	});
