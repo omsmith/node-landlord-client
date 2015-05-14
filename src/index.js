@@ -1,9 +1,12 @@
 'use strict';
 
-var Promise = require('bluebird'),
+var parseCacheControl = require('parse-cache-control'),
+	Promise = require('bluebird'),
 	request = require('superagent');
 
-var errors = require('./errors');
+var AbstractLandlordCache = require('./abstract-cache'),
+	errors = require('./errors'),
+	LRULandlordCache = require('./lru-cache');
 
 var DEFAULT_LANDLORD_URI = 'http://landlord-dev.desire2learnvalence.com';
 
@@ -14,53 +17,70 @@ function LandlordClient (opts) {
 
 	opts = opts || {};
 
+	this._cache = opts.cache || new LRULandlordCache();
+
+	if (!(this._cache instanceof AbstractLandlordCache)) {
+		throw new Error('"opts.cache" must be an instance of AbstractLandlordCache if provided');
+	}
+
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
 }
 
-LandlordClient.prototype.lookupTenantId = function lookupTenantId (host) {
+LandlordClient.prototype.lookupTenantId = Promise.method(function lookupTenantId (host) {
 	var self = this;
 
-	return new Promise(function (resolve, reject) {
-		if ('string' !== typeof host || 0 === host.length) {
-			reject(new Error('host must be a valid string'));
-		}
+	if ('string' !== typeof host || 0 === host.length) {
+		throw new Error('host must be a valid string');
+	}
 
-		request
-			.get(self._landlord + '/v1/tenants')
-			.query({
-				domain: host
-			})
-			.end(function (err, res) {
-				if (err) {
-					reject(new errors.TenantLookupFailed(err));
-					return;
-				}
+	return self
+		._cache
+		.getTenantIdLookup(host)
+		.catch(function () {
+			return new Promise(function (resolve, reject) {
+				request
+					.get(self._landlord + '/v1/tenants')
+					.query({
+						domain: host
+					})
+					.end(function (err, res) {
+						if (err) {
+							reject(new errors.TenantLookupFailed(err));
+							return;
+						}
 
-				var tenants = res.body;
+						var tenants = res.body;
 
-				if (!Array.isArray(tenants)) {
-					reject(new errors.TenantLookupFailed());
-					return;
-				}
+						if (!Array.isArray(tenants)) {
+							reject(new errors.TenantLookupFailed());
+							return;
+						}
 
-				if (0 === tenants.length) {
-					reject(new errors.TenantNotFound(host));
-					return;
-				}
+						if (0 === tenants.length) {
+							reject(new errors.TenantNotFound(host));
+							return;
+						}
 
-				var tenantInfo = tenants[0];
+						var tenantInfo = tenants[0];
 
-				if ('object' !== typeof tenantInfo || !tenantInfo.hasOwnProperty('tenantId')) {
-					reject(new errors.TenantLookupFailed());
-					return;
-				}
+						if ('object' !== typeof tenantInfo || !tenantInfo.hasOwnProperty('tenantId')) {
+							reject(new errors.TenantLookupFailed());
+							return;
+						}
 
-				var tenantId = tenantInfo.tenantId;
+						var tenantId = tenantInfo.tenantId;
 
-				resolve(tenantId);
+						var result = self
+							._cache
+							.cacheTenantIdLookup(host, tenantId)
+							.catch(function () {})
+							.return(tenantId);
+
+						resolve(result);
+					});
 			});
-	});
-};
+		});
+});
 
 LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId) {
 	var self = this;
@@ -93,6 +113,11 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId
 
 				tenantInfo.domain = tenantInfo.domain.replace(/\/+$/g, '');
 
+				var cacheControl = parseCacheControl(res.headers['cache-control']);
+				tenantInfo._maxAge = null !== cacheControl
+					? cacheControl['max-age']
+					: null;
+
 				resolve(tenantInfo);
 			});
 	});
@@ -106,12 +131,32 @@ LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId)
 };
 
 LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri (tenantId) {
-	return this._lookupTenantInfo(tenantId)
-		.then(function (tenantInfo) {
-			var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
-			return protocol + '://' + tenantInfo.domain + '/';
+	var self = this;
+
+	return self
+		._cache
+		.getTenantUrlLookup(tenantId)
+		.catch(function () {
+			return self
+				._lookupTenantInfo(tenantId)
+				.then(function (tenantInfo) {
+					var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
+					var url = protocol + '://' + tenantInfo.domain + '/';
+
+					if (null !== tenantInfo._maxAge) {
+						return self
+							._cache
+							.cacheTenantUrlLookup(tenantId, url, tenantInfo._maxAge)
+							.catch(function () {})
+							.return(url);
+					}
+
+					return url;
+				});
 		});
 };
 
 module.exports = LandlordClient;
+module.exports.AbstractLandlordCache = AbstractLandlordCache;
 module.exports.errors = errors;
+module.exports.LRULandlordCache = LRULandlordCache;

@@ -41,6 +41,11 @@ You may optionally specify the Landlord instance to connect to.
 ...new LandlordClient({ endpoint: 'https://landlord.brightspace.com' });
 ```
 
+##### Option: cache `AbstractLandlordCache` _(LRULandlordCache)_
+
+You may optionally specifiy an instance of a cache inheriting from
+`LandlordClient.AbstractLandlordCache`.
+
 ---
 
 #### `.lookupTenantId(String host)` -> `Promise<String>`

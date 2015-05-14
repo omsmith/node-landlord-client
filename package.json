@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/Brightspace/node-landlord-client",
   "dependencies": {
-    "bluebird": "^2.9.16",
+    "bluebird": "^2.9.25",
+    "lru-cache": "^2.6.2",
+    "parse-cache-control": "^1.0.1",
     "superagent": "^1.1.0"
   },
   "devDependencies": {
