@@ -92,7 +92,6 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId
 
 		request
 			.get(self._landlord + '/v1/tenants/' + tenantId)
-			.set('Authorization', 'REDACTED-landlord-dev-key')
 			.end(function (err, res) {
 				if (err) {
 					if (res && res.status === 404) {
