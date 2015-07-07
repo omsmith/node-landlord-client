@@ -8,7 +8,7 @@ var AbstractLandlordCache = require('./abstract-cache'),
 	errors = require('./errors'),
 	LRULandlordCache = require('./lru-cache');
 
-var DEFAULT_LANDLORD_URI = 'https://landlord.desire2learnvalence.com';
+var DEFAULT_LANDLORD_URI = 'https://landlord.brightspace.com';
 
 function LandlordClient (opts) {
 	if (!(this instanceof LandlordClient)) {
