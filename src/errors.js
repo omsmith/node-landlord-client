@@ -2,7 +2,7 @@
 
 var util = require('util');
 
-function TenantNotFoundError (host) {
+function TenantNotFoundError(host) {
 	this.name = 'TenantNotFoundError';
 	this.message = 'Tenant not found for host "' + host + '"';
 
@@ -10,7 +10,7 @@ function TenantNotFoundError (host) {
 }
 util.inherits(TenantNotFoundError, Error);
 
-function TenantIdNotFoundError (tenantId) {
+function TenantIdNotFoundError(tenantId) {
 	this.name = 'TenantIdNotFoundError';
 	this.message = 'Tenant not found with id "' + tenantId + '"';
 
@@ -18,7 +18,7 @@ function TenantIdNotFoundError (tenantId) {
 }
 util.inherits(TenantIdNotFoundError, Error);
 
-function TenantLookupFailedError (inner) {
+function TenantLookupFailedError(inner) {
 	this.name = 'TenantLookupFailedError';
 	this.message = 'Tenant lookup failed';
 	this.inner = inner;
