@@ -10,7 +10,7 @@ var AbstractLandlordCache = require('./abstract-cache'),
 
 var DEFAULT_LANDLORD_URI = 'https://landlord.brightspace.com';
 
-function LandlordClient (opts) {
+function LandlordClient(opts) {
 	if (!(this instanceof LandlordClient)) {
 		return new LandlordClient(opts);
 	}
@@ -26,7 +26,7 @@ function LandlordClient (opts) {
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
 }
 
-LandlordClient.prototype.lookupTenantId = Promise.method(function lookupTenantId (host) {
+LandlordClient.prototype.lookupTenantId = Promise.method(/* @this */ function lookupTenantId(host) {
 	var self = this;
 
 	if ('string' !== typeof host || 0 === host.length) {
@@ -36,14 +36,14 @@ LandlordClient.prototype.lookupTenantId = Promise.method(function lookupTenantId
 	return self
 		._cache
 		.getTenantIdLookup(host)
-		.catch(function () {
-			return new Promise(function (resolve, reject) {
+		.catch(function() {
+			return new Promise(function(resolve, reject) {
 				request
 					.get(self._landlord + '/v1/tenants')
 					.query({
 						domain: host
 					})
-					.end(function (err, res) {
+					.end(function(err, res) {
 						if (err) {
 							reject(new errors.TenantLookupFailed(err));
 							return;
@@ -73,7 +73,7 @@ LandlordClient.prototype.lookupTenantId = Promise.method(function lookupTenantId
 						var result = self
 							._cache
 							.cacheTenantIdLookup(host, tenantId)
-							.catch(function () {})
+							.catch(function() {})
 							.return(tenantId);
 
 						resolve(result);
@@ -82,17 +82,17 @@ LandlordClient.prototype.lookupTenantId = Promise.method(function lookupTenantId
 		});
 });
 
-LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId) {
+LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId) {
 	var self = this;
 
-	return new Promise(function (resolve, reject) {
+	return new Promise(function(resolve, reject) {
 		if ('string' !== typeof tenantId) {
 			reject(new Error('tenantId must be a valid string'));
 		}
 
 		request
 			.get(self._landlord + '/v1/tenants/' + tenantId)
-			.end(function (err, res) {
+			.end(function(err, res) {
 				if (err) {
 					if (res && res.status === 404) {
 						reject(new errors.TenantIdNotFound(tenantId));
@@ -122,23 +122,23 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo (tenantId
 	});
 };
 
-LandlordClient.prototype.lookupTenantHost = function lookupTenantHost (tenantId) {
+LandlordClient.prototype.lookupTenantHost = function lookupTenantHost(tenantId) {
 	return this._lookupTenantInfo(tenantId)
-		.then(function (tenantInfo) {
+		.then(function(tenantInfo) {
 			return tenantInfo.domain;
 		});
 };
 
-LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri (tenantId) {
+LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri(tenantId) {
 	var self = this;
 
 	return self
 		._cache
 		.getTenantUrlLookup(tenantId)
-		.catch(function () {
+		.catch(function() {
 			return self
 				._lookupTenantInfo(tenantId)
-				.then(function (tenantInfo) {
+				.then(function(tenantInfo) {
 					var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
 					var url = protocol + '://' + tenantInfo.domain + '/';
 
@@ -146,7 +146,7 @@ LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri (tenantId) {
 						return self
 							._cache
 							.cacheTenantUrlLookup(tenantId, url, tenantInfo._maxAge)
-							.catch(function () {})
+							.catch(function() {})
 							.return(url);
 					}
 
