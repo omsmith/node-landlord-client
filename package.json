@@ -32,5 +32,6 @@
       "es6": true,
       "node": true
     }
-  }
+  },
+  "license": "Apache-2.0"
 }
