@@ -7,5 +7,4 @@ node_modules
 .editorconfig
 
 .travis.yml
-travis-deploy.sh
 .npmrc*
