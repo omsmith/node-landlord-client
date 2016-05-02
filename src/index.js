@@ -1,8 +1,10 @@
 'use strict';
 
 var parseCacheControl = require('parse-cache-control'),
+	url = require('fast-url-parser'),
 	Promise = require('bluebird'),
-	request = require('superagent');
+	request = require('superagent'),
+	tcpp = require('tcp-ping');
 
 var AbstractLandlordCache = require('./abstract-cache'),
 	errors = require('./errors'),
@@ -24,6 +26,7 @@ function LandlordClient(opts) {
 	}
 
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
+	this._landlordOpts = url.parse(this._landlord);
 }
 
 LandlordClient.prototype.lookupTenantId = Promise.method(/* @this */ function lookupTenantId(host) {
@@ -153,6 +156,27 @@ LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri(tenantId) {
 					return url;
 				});
 		});
+};
+
+LandlordClient.prototype.validateConfiguration = function validateConfiguration(opts) {
+	var self = this;
+	return new Promise(function(resolve, reject) {
+		const port = self._landlordOpts.port || (self._landlordOpts.protocol === 'https:' ? 443 : 80);
+		tcpp.ping(Object.assign({
+			attempts: 1,
+			timeout: 500
+		}, opts, {
+			address: self._landlordOpts.hostname,
+			port: port
+		}), function(err, data) {
+			var available = data && data.min !== undefined;
+			if (!available) {
+				reject(new errors.LandlordNotAvailable(self._landlord, data.results));
+			} else {
+				err ? reject(err) : resolve(data);
+			}
+		});
+	});
 };
 
 module.exports = LandlordClient;

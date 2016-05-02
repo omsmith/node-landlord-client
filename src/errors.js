@@ -31,8 +31,18 @@ function TenantLookupFailedError(inner) {
 }
 util.inherits(TenantLookupFailedError, Error);
 
+function LandlordNotAvailable(host, results) {
+	this.name = 'LandlordNotAvailable';
+	this.message = 'Landlord not available for host "' + host + '"';
+	this.results = results;
+
+	Error.captureStackTrace(this, this.constructor);
+}
+util.inherits(LandlordNotAvailable, Error);
+
 module.exports = {
 	TenantNotFound: TenantNotFoundError,
 	TenantIdNotFound: TenantIdNotFoundError,
-	TenantLookupFailed: TenantLookupFailedError
+	TenantLookupFailed: TenantLookupFailedError,
+	LandlordNotAvailable: LandlordNotAvailable
 };
