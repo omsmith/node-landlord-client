@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "check-style": "eslint --ignore-path .gitignore .",
-    "test": "npm run check-style"
+    "test-unit": "nyc mocha -r test/_setup.js test/*.spec.js",
+    "test": "npm run check-style && npm run test-unit"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
     "eslint-config-brightspace": "0.3.1",
     "mocha": "^3.4.2",
     "nock": "^9.0.13",
+    "nyc": "^11.0.3",
     "sinon": "^2.3.8"
   },
   "license": "Apache-2.0"
