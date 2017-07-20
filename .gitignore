@@ -57,3 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+# node-landlord-client
+.npmrc*
+*.swo
+*.swp
