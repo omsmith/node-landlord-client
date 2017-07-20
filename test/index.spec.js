@@ -36,19 +36,19 @@ describe('LandlordClient', function() {
 				domain: data.domain
 			}]);
 
-		const cacheProto = LandlordClient.LRULandlordCache.prototype;
+		const cache = new LandlordClient.LRULandlordCache();
 		const getTenantIdLookupStub =
-			sandbox.stub(cacheProto, 'getTenantIdLookup');
+			sandbox.stub(cache, 'getTenantIdLookup');
 		getTenantIdLookupStub
 			.withArgs(data.domain)
 			.returns(Promise.reject(new Error('Not Found')));
 		const cacheTenantIdLookupStub =
-			sandbox.stub(cacheProto, 'cacheTenantIdLookup');
+			sandbox.stub(cache, 'cacheTenantIdLookup');
 		cacheTenantIdLookupStub
 			.withArgs(data.domain, data.tenantId)
 			.returns(Promise.resolve());
 
-		const instance = new LandlordClient({ endpoint: data.endpoint });
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
 		return expect(instance.lookupTenantId(data.domain))
 			.to.eventually
 			.equal(data.tenantId)
@@ -60,16 +60,16 @@ describe('LandlordClient', function() {
 	it('does not look up tenant id when cached', function() {
 		const getRequest = nock(data.endpoint);
 
-		const cacheProto = LandlordClient.LRULandlordCache.prototype;
+		const cache = new LandlordClient.LRULandlordCache();
 		const getTenantIdLookupStub =
-			sandbox.stub(cacheProto, 'getTenantIdLookup');
+			sandbox.stub(cache, 'getTenantIdLookup');
 		getTenantIdLookupStub
 			.withArgs(data.domain)
 			.returns(Promise.resolve(data.tenantId));
 		const cacheTenantUrlLookupSpy =
-			sandbox.stub(cacheProto, 'cacheTenantUrlLookup');
+			sandbox.stub(cache, 'cacheTenantUrlLookup');
 
-		const instance = new LandlordClient({ endpoint: data.endpoint });
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
 		return expect(instance.lookupTenantId(data.domain))
 			.to.eventually
 			.equal(data.tenantId)
@@ -92,19 +92,19 @@ describe('LandlordClient', function() {
 				'Cache-Control': 'max-age=' + data.maxAge
 			});
 
-		const cacheProto = LandlordClient.LRULandlordCache.prototype;
+		const cache = new LandlordClient.LRULandlordCache();
 		const getTenantUrlLookupStub =
-			sandbox.stub(cacheProto, 'getTenantUrlLookup');
+			sandbox.stub(cache, 'getTenantUrlLookup');
 		getTenantUrlLookupStub
 			.withArgs(data.tenantId)
 			.returns(Promise.reject(new Error('Not Found')));
 		const cacheTenantUrlLookupStub =
-			sandbox.stub(cacheProto, 'cacheTenantUrlLookup');
+			sandbox.stub(cache, 'cacheTenantUrlLookup');
 		cacheTenantUrlLookupStub
 			.withArgs(data.tenantId, data.tenantUrl, data.maxAge)
 			.returns(Promise.resolve());
 
-		const instance = new LandlordClient({ endpoint: data.endpoint });
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
 		return expect(instance.lookupTenantUrl(data.tenantId))
 			.to.eventually
 			.equal(data.tenantUrl)
@@ -119,16 +119,16 @@ describe('LandlordClient', function() {
 	it('does not look up tenant info when cached', function() {
 		const getRequest = nock(data.endpoint);
 
-		const cacheProto = LandlordClient.LRULandlordCache.prototype;
+		const cache = new LandlordClient.LRULandlordCache();
 		const getTenantUrlLookupStub =
-			sandbox.stub(cacheProto, 'getTenantUrlLookup');
+			sandbox.stub(cache, 'getTenantUrlLookup');
 		getTenantUrlLookupStub
 			.withArgs(data.tenantId)
 			.returns(Promise.resolve(data.tenantUrl));
 		const cacheTenantUrlLookupSpy =
-			sandbox.stub(cacheProto, 'cacheTenantUrlLookup');
+			sandbox.stub(cache, 'cacheTenantUrlLookup');
 
-		const instance = new LandlordClient({ endpoint: data.endpoint });
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
 		return expect(instance.lookupTenantUrl(data.tenantId))
 			.to.eventually
 			.equal(data.tenantUrl)
