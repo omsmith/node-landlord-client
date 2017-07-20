@@ -1,4 +1,6 @@
 # landlord-client
+[![Coverage
+Status](https://coveralls.io/repos/github/Brightspace/node-landlord-client/badge.svg?branch=master)](https://coveralls.io/github/Brightspace/node-landlord-client?branch=master)
 
 Simple helper for interacting with the Landlord APIs
 
