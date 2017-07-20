@@ -3,6 +3,11 @@
   "version": "2.1.0",
   "description": "Helper for interacting with Landlord",
   "main": "src/index.js",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "check-style": "eslint --ignore-path .gitignore .",
     "test-unit": "nyc mocha -r test/_setup.js test/*.spec.js",
