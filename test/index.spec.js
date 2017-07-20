@@ -66,6 +66,8 @@ describe('LandlordClient', function() {
 		getTenantIdLookupStub
 			.withArgs(data.domain)
 			.returns(Promise.resolve(data.tenantId));
+		const cacheTenantUrlLookupSpy =
+			sandbox.stub(cacheProto, 'cacheTenantUrlLookup');
 
 		const instance = new LandlordClient({ endpoint: data.endpoint });
 		return expect(instance.lookupTenantId(data.domain))
@@ -73,6 +75,9 @@ describe('LandlordClient', function() {
 			.equal(data.tenantId)
 			.then(function() {
 				getRequest.done();
+			})
+			.then(function() {
+				expect(cacheTenantUrlLookupSpy.notCalled).to.be.true;
 			});
 	});
 
