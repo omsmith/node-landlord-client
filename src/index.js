@@ -1,8 +1,8 @@
 'use strict';
 
 var parseCacheControl = require('parse-cache-control'),
+	promised = require('promised-method'),
 	url = require('url'),
-	Promise = require('bluebird'),
 	request = require('superagent'),
 	tcpp = require('tcp-ping');
 
@@ -29,7 +29,7 @@ function LandlordClient(opts) {
 	this._landlordOpts = url.parse(this._landlord);
 }
 
-LandlordClient.prototype.lookupTenantId = Promise.method(/* @this */ function lookupTenantId(host) {
+LandlordClient.prototype.lookupTenantId = promised(/* @this */ function lookupTenantId(host) {
 	var self = this;
 
 	if ('string' !== typeof host || 0 === host.length) {
@@ -77,7 +77,7 @@ LandlordClient.prototype.lookupTenantId = Promise.method(/* @this */ function lo
 							._cache
 							.cacheTenantIdLookup(host, tenantId)
 							.catch(function() {})
-							.return(tenantId);
+							.then(function() { return tenantId; });
 
 						resolve(result);
 					});
@@ -150,7 +150,7 @@ LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri(tenantId) {
 							._cache
 							.cacheTenantUrlLookup(tenantId, url, tenantInfo._maxAge)
 							.catch(function() {})
-							.return(url);
+							.then(function() { return url; });
 					}
 
 					return url;

@@ -1,6 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
 const __sinon__ = require('sinon');
 const expect = require('chai').expect;
 const nock = require('nock');
