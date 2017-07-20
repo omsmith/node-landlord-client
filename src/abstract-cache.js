@@ -1,7 +1,7 @@
 'use strict';
 
 var inherits = require('util').inherits,
-	Promise = require('bluebird');
+	promised = require('promised-method');
 
 function ValueLookupFailed(inner) {
 	this.name = 'ValueLookupFailed';
@@ -10,9 +10,11 @@ function ValueLookupFailed(inner) {
 }
 inherits(ValueLookupFailed, Error);
 
+function noop() {}
+
 function AbstractLandlordCache() {}
 
-AbstractLandlordCache.prototype.getTenantIdLookup = Promise.method(/* @this */ function getTenantIdLookup(host) {
+AbstractLandlordCache.prototype.getTenantIdLookup = promised(/* @this */ function getTenantIdLookup(host) {
 	if ('string' !== typeof host) {
 		throw new Error('"host" must be a String');
 	}
@@ -38,7 +40,7 @@ AbstractLandlordCache.prototype.getTenantIdLookup = Promise.method(/* @this */ f
 		});
 });
 
-AbstractLandlordCache.prototype.cacheTenantIdLookup = Promise.method(/* @this */ function cacheTenantIdLookup(host, tenantId) {
+AbstractLandlordCache.prototype.cacheTenantIdLookup = promised(/* @this */ function cacheTenantIdLookup(host, tenantId) {
 	if ('string' !== typeof host) {
 		throw new Error('"host" must be a String');
 	}
@@ -55,14 +57,14 @@ AbstractLandlordCache.prototype.cacheTenantIdLookup = Promise.method(/* @this */
 
 	return Promise
 		.resolve(this._set(key, tenantId, Infinity))
-		.return(undefined);
+		.then(noop);
 });
 
 AbstractLandlordCache.prototype._buildTenantIdLookupKey = function buildTenantIdLookupKey(host) {
 	return 'host-tid|' + host;
 };
 
-AbstractLandlordCache.prototype.getTenantUrlLookup = Promise.method(/* @this */ function getTenantUrlLookup(tenantId) {
+AbstractLandlordCache.prototype.getTenantUrlLookup = promised(/* @this */ function getTenantUrlLookup(tenantId) {
 	if ('string' !== typeof tenantId) {
 		throw new Error('"tenantId" must be a UUID');
 	}
@@ -88,7 +90,7 @@ AbstractLandlordCache.prototype.getTenantUrlLookup = Promise.method(/* @this */ 
 		});
 });
 
-AbstractLandlordCache.prototype.cacheTenantUrlLookup = Promise.method(/* @this */ function cacheTenantUrlLookup(tenantId, url, maxAge) {
+AbstractLandlordCache.prototype.cacheTenantUrlLookup = promised(/* @this */ function cacheTenantUrlLookup(tenantId, url, maxAge) {
 	if ('string' !== typeof tenantId) {
 		throw new Error('"tenantId" must be a UUID');
 	}
@@ -109,7 +111,7 @@ AbstractLandlordCache.prototype.cacheTenantUrlLookup = Promise.method(/* @this *
 
 	return Promise
 		.resolve(this._set(key, url, maxAge))
-		.return(undefined);
+		.then(noop);
 });
 
 AbstractLandlordCache.prototype._buildTenantUrlLookupKey = function buildTenantUrlLookupKey(tenantId) {
