@@ -6,7 +6,8 @@
   "scripts": {
     "check-style": "eslint --ignore-path .gitignore .",
     "test-unit": "nyc mocha -r test/_setup.js test/*.spec.js",
-    "test": "npm run check-style && npm run test-unit"
+    "test": "npm run check-style && npm run test-unit",
+    "report-cov": "nyc report --reporter lcovonly && coveralls < ./coverage/lcov.info"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "chai": "^4.1.0",
     "chai-as-promised": "^7.1.1",
+    "coveralls": "^2.13.1",
     "eslint": "^4.0.0",
     "eslint-config-brightspace": "0.3.1",
     "mocha": "^3.4.2",
