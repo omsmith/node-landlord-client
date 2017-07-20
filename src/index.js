@@ -1,7 +1,7 @@
 'use strict';
 
 var parseCacheControl = require('parse-cache-control'),
-	url = require('fast-url-parser'),
+	url = require('url'),
 	Promise = require('bluebird'),
 	request = require('superagent'),
 	tcpp = require('tcp-ping');
