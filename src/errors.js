@@ -31,10 +31,10 @@ function TenantLookupFailedError(inner) {
 }
 util.inherits(TenantLookupFailedError, Error);
 
-function LandlordNotAvailable(host, results) {
+function LandlordNotAvailable(host, inner) {
 	this.name = 'LandlordNotAvailable';
 	this.message = 'Landlord not available for host "' + host + '"';
-	this.results = results;
+	this.inner = inner;
 
 	Error.captureStackTrace(this, this.constructor);
 }

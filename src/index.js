@@ -160,9 +160,9 @@ LandlordClient.prototype.validateConfiguration = function validateConfiguration(
 	return new Promise(function(resolve, reject) {
 		request
 			.get(self._landlord + '/ping')
-			.end(function(err, res) {
+			.end(function(err/*, res*/) {
 				if (err) {
-					reject(new errors.LandlordNotAvailable(self._landlord, res));
+					reject(new errors.LandlordNotAvailable(self._landlord, err));
 					return;
 				}
 				resolve('OK');
