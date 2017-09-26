@@ -4,6 +4,7 @@ const __sinon__ = require('sinon');
 const expect = require('chai').expect;
 const nock = require('nock');
 
+const errors = require('../src/errors');
 const LandlordClient = require('../src/index');
 const data = {
 	endpoint: 'http://landlord.localhost',
@@ -136,6 +137,32 @@ describe('LandlordClient', function() {
 			})
 			.then(function() {
 				expect(cacheTenantUrlLookupSpy.notCalled).to.be.true;
+			});
+	});
+
+	it('gets error when tenantId not found', function() {
+		const nonExistantTenantId = '88ce2351-2xxx-40ba-8774-d4d46f0d2d1a';
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants/' + nonExistantTenantId)
+			.replyWithError();
+
+		const cache = new LandlordClient.LRULandlordCache();
+		const getTenantUrlLookupStub =
+			sandbox.stub(cache, 'getTenantUrlLookup');
+		getTenantUrlLookupStub
+			.withArgs(nonExistantTenantId)
+			.returns(Promise.reject(new Error('Not Found')));
+		const cacheTenantUrlLookupStub =
+			sandbox.stub(cache, 'cacheTenantUrlLookup');
+		cacheTenantUrlLookupStub
+			.withArgs(nonExistantTenantId, data.tenantUrl, data.maxAge)
+			.returns(Promise.reject(new Error('Not Found')));
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		return expect(instance.lookupTenantUrl(nonExistantTenantId))
+			.to.be.rejectedWith(errors.TenantLookupFailed)
+			.then(function() {
+				getRequest.done();
 			});
 	});
 });
