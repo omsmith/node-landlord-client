@@ -97,7 +97,7 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 					if (res && res.status === 404) {
 						reject(new errors.TenantIdNotFound(tenantId));
 					} else {
-						reject(new errors.TenantLookupFailed(err));
+						reject(new errors.TenantLookupFailed(err, tenantId));
 					}
 
 					return;
@@ -106,7 +106,7 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 				var tenantInfo = res.body;
 
 				if ('object' !== typeof tenantInfo || !tenantInfo.hasOwnProperty('domain') || !tenantInfo.hasOwnProperty('isHttpSite')) {
-					reject(new errors.TenantLookupFailed());
+					reject(new errors.TenantLookupFailed({}, tenantId));
 					return;
 				}
 
