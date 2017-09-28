@@ -18,9 +18,12 @@ function TenantIdNotFoundError(tenantId) {
 }
 util.inherits(TenantIdNotFoundError, Error);
 
-function TenantLookupFailedError(inner) {
+function TenantLookupFailedError(inner, tenantId) {
 	this.name = 'TenantLookupFailedError';
 	this.message = 'Tenant lookup failed';
+	if (tenantId) {
+		this.message += ' for id "' + tenantId + '"';
+	}
 	this.inner = inner;
 
 	if (inner && inner.stack) {
