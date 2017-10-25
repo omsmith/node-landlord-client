@@ -48,6 +48,15 @@ You may optionally specify the Landlord instance to connect to.
 You may optionally specifiy an instance of a cache inheriting from
 `LandlordClient.AbstractLandlordCache`.
 
+##### Option: name `String`
+
+**Recommended**. You may optionally specify a name to send as part of the user
+agent when sending requests to Landlord. Assists in tracking issues and RCAs.
+
+```js
+...new LandlordClient({ name: 'johns-service' })
+```
+
 ---
 
 #### `.lookupTenantId(String host)` -> `Promise<String>`

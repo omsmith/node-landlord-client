@@ -16,6 +16,8 @@ const data = {
 	maxAge: 3600
 };
 
+const EXPECTED_USER_AGENT = `node-landlord-client/${require('../package.json').version}`;
+
 describe('LandlordClient', function() {
 	let sandbox = __sinon__.sandbox.create();
 
@@ -311,6 +313,88 @@ describe('LandlordClient', function() {
 		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
 		return expect(instance.lookupTenantUrl(nonExistantTenantId))
 			.to.be.rejectedWith(errors.TenantLookupFailed)
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('sends a custom user-agent header when looking up tenant id', function() {
+		// this will fail due to nock if the user-agent header doesnt match
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants')
+			.query({ domain: data.domain })
+			.matchHeader('User-Agent', EXPECTED_USER_AGENT)
+			.reply(200, [{
+				tenantId: data.tenantId,
+				domain: data.domain
+			}]);
+
+		const instance = new LandlordClient({ endpoint: data.endpoint });
+		return instance
+			.lookupTenantId(data.domain)
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('includes the client name in custom user-agent header when looking up tenant id', function() {
+		// this will fail due to nock if the user-agent header doesnt match
+		const name = 'landlord-client-tests';
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants')
+			.query({ domain: data.domain })
+			.matchHeader('User-Agent', `${name} (${EXPECTED_USER_AGENT})`)
+			.reply(200, [{
+				tenantId: data.tenantId,
+				domain: data.domain
+			}]);
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, name });
+		return instance
+			.lookupTenantId(data.domain)
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('sends a custom user-agent header when looking up tenant url', function() {
+		// this will fail due to nock if the user-agent header doesnt match
+
+		const getRequest = nock(data.endpoint)
+			.get(`/v1/tenants/${data.tenantId}`)
+			.matchHeader('User-Agent', EXPECTED_USER_AGENT)
+			.reply(200, {
+				tenantId: data.tenantId,
+				domain: data.domain,
+				isHttpSite: data.isHttpSite
+			});
+
+		const instance = new LandlordClient({ endpoint: data.endpoint });
+		return instance
+			.lookupTenantUrl(data.tenantId)
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('includes the client name in custom user-agent header when looking up tenant url', function() {
+		// this will fail due to nock if the user-agent header doesnt match
+		const name = 'landlord-client-tests';
+
+		const getRequest = nock(data.endpoint)
+			.get(`/v1/tenants/${data.tenantId}`)
+			.matchHeader('User-Agent', `${name} (${EXPECTED_USER_AGENT})`)
+			.reply(200, {
+				tenantId: data.tenantId,
+				domain: data.domain,
+				isHttpSite: data.isHttpSite
+			});
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, name });
+		return instance
+			.lookupTenantUrl(data.tenantId)
 			.then(function() {
 				getRequest.done();
 			});

@@ -8,6 +8,7 @@ var AbstractLandlordCache = require('./abstract-cache'),
 	LRULandlordCache = require('./lru-cache');
 
 var DEFAULT_LANDLORD_URI = 'https://landlord.brightspace.com';
+var USER_AGENT = 'node-landlord-client/' + require('../package.json').version;
 
 function LandlordClient(opts) {
 	if (!(this instanceof LandlordClient)) {
@@ -17,14 +18,24 @@ function LandlordClient(opts) {
 	opts = opts || {};
 
 	this._cache = opts.cache || new LRULandlordCache();
-	this._inflightSearches = new Map();
-	this._inflightFetches = new Map();
-
 	if (!(this._cache instanceof AbstractLandlordCache)) {
 		throw new Error('"opts.cache" must be an instance of AbstractLandlordCache if provided');
 	}
 
+	if (opts.name) {
+		if (typeof opts.name !== 'string') {
+			throw new TypeError('"opts.name" must be a String if provided');
+		}
+
+		this._userAgent = opts.name + ' (' + USER_AGENT + ')';
+	} else {
+		this._userAgent = USER_AGENT;
+	}
+
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
+
+	this._inflightSearches = new Map();
+	this._inflightFetches = new Map();
 }
 
 LandlordClient.prototype.lookupTenantId = /* @this */ function lookupTenantId(host) {
@@ -45,6 +56,7 @@ LandlordClient.prototype.lookupTenantId = /* @this */ function lookupTenantId(ho
 			return new Promise(function(resolve, reject) {
 				request
 					.get(self._landlord + '/v1/tenants')
+					.set('User-Agent', self._userAgent)
 					.query({
 						domain: host
 					})
@@ -109,6 +121,7 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 
 		request
 			.get(self._landlord + '/v1/tenants/' + tenantId)
+			.set('User-Agent', self._userAgent)
 			.end(function(err, res) {
 				if (err) {
 					if (res && res.status === 404) {
