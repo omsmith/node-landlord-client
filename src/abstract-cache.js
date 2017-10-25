@@ -81,16 +81,19 @@ AbstractLandlordCache.prototype.getTenantUrlLookup = promised(/* @this */ functi
 			err = new ValueLookupFailed(err);
 			throw err;
 		})
-		.then(function(url) {
-			if ('string' !== typeof url) {
+		.then(function(value) {
+			if ('object' !== typeof value
+				&& 'string' !== typeof value.url
+				&& 'number' !== typeof value.expiry
+			) {
 				throw new ValueLookupFailed();
 			}
 
-			return url;
+			return value;
 		});
 });
 
-AbstractLandlordCache.prototype.cacheTenantUrlLookup = promised(/* @this */ function cacheTenantUrlLookup(tenantId, url, maxAge) {
+AbstractLandlordCache.prototype.cacheTenantUrlLookup = promised(/* @this */ function cacheTenantUrlLookup(tenantId, url, expiry) {
 	if ('string' !== typeof tenantId) {
 		throw new Error('"tenantId" must be a UUID');
 	}
@@ -99,8 +102,8 @@ AbstractLandlordCache.prototype.cacheTenantUrlLookup = promised(/* @this */ func
 		throw new Error('"url" must be a String');
 	}
 
-	if ('number' !== typeof maxAge) {
-		throw new Error('"maxAge" must be a Number');
+	if ('number' !== typeof expiry) {
+		throw new Error('"expiry" must be a Number');
 	}
 
 	if ('function' !== typeof this._set) {
@@ -108,9 +111,10 @@ AbstractLandlordCache.prototype.cacheTenantUrlLookup = promised(/* @this */ func
 	}
 
 	var key = this._buildTenantUrlLookupKey(tenantId);
+	var value = { url: url, expiry: expiry };
 
 	return Promise
-		.resolve(this._set(key, url, maxAge))
+		.resolve(this._set(key, value, Infinity))
 		.then(noop);
 });
 
