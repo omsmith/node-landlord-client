@@ -17,14 +17,13 @@ function LandlordClient(opts) {
 	opts = opts || {};
 
 	this._cache = opts.cache || new LRULandlordCache();
-	this._inflightSearches = new Map();
-	this._inflightFetches = new Map();
-
 	if (!(this._cache instanceof AbstractLandlordCache)) {
 		throw new Error('"opts.cache" must be an instance of AbstractLandlordCache if provided');
 	}
 
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
+	this._inflightSearches = new Map();
+	this._inflightFetches = new Map();
 }
 
 LandlordClient.prototype.lookupTenantId = /* @this */ function lookupTenantId(host) {
