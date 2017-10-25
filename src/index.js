@@ -1,7 +1,6 @@
 'use strict';
 
 var parseCacheControl = require('parse-cache-control'),
-	promised = require('promised-method'),
 	request = require('superagent');
 
 var AbstractLandlordCache = require('./abstract-cache'),
@@ -18,6 +17,8 @@ function LandlordClient(opts) {
 	opts = opts || {};
 
 	this._cache = opts.cache || new LRULandlordCache();
+	this._inflightSearches = new Map();
+	this._inflightFetches = new Map();
 
 	if (!(this._cache instanceof AbstractLandlordCache)) {
 		throw new Error('"opts.cache" must be an instance of AbstractLandlordCache if provided');
@@ -26,14 +27,18 @@ function LandlordClient(opts) {
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
 }
 
-LandlordClient.prototype.lookupTenantId = promised(/* @this */ function lookupTenantId(host) {
+LandlordClient.prototype.lookupTenantId = /* @this */ function lookupTenantId(host) {
 	var self = this;
 
 	if ('string' !== typeof host || 0 === host.length) {
-		throw new Error('host must be a valid string');
+		return Promise.reject(new Error('host must be a valid string'));
 	}
 
-	return self
+	if (this._inflightSearches.has(host)) {
+		return this._inflightSearches.get(host);
+	}
+
+	var search = self
 		._cache
 		.getTenantIdLookup(host)
 		.catch(function() {
@@ -80,12 +85,24 @@ LandlordClient.prototype.lookupTenantId = promised(/* @this */ function lookupTe
 					});
 			});
 		});
-});
+
+	this._inflightSearches.set(host, search);
+	function clearInflight() {
+		self._inflightSearches.delete(host);
+	}
+	search.then(clearInflight, clearInflight);
+
+	return search;
+};
 
 LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId) {
 	var self = this;
 
-	return new Promise(function(resolve, reject) {
+	if (this._inflightFetches.has(tenantId)) {
+		return this._inflightFetches.get(tenantId);
+	}
+
+	var fetch = new Promise(function(resolve, reject) {
 		if ('string' !== typeof tenantId) {
 			reject(new Error('tenantId must be a valid string'));
 		}
@@ -120,6 +137,14 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 				resolve(tenantInfo);
 			});
 	});
+
+	this._inflightFetches.set(tenantId, fetch);
+	function clearInflight() {
+		self._inflightFetches.delete(tenantId);
+	}
+	fetch.then(clearInflight, clearInflight);
+
+	return fetch;
 };
 
 LandlordClient.prototype.lookupTenantHost = function lookupTenantHost(tenantId) {
