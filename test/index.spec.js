@@ -81,6 +81,78 @@ describe('LandlordClient', function() {
 			});
 	});
 
+	it('dedupes concurrent tenant id lookups', function() {
+		// this will fail if not deduped due to the nock only working once
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants')
+			.query({ domain: data.domain })
+			.reply(200, [{
+				tenantId: data.tenantId,
+				domain: data.domain
+			}]);
+
+		const cache = new LandlordClient.LRULandlordCache();
+		sandbox
+			.stub(cache, 'getTenantIdLookup')
+			.returns(Promise.reject(new Error('Not Found')));
+		sandbox
+			.stub(cache, 'cacheTenantIdLookup')
+			.returns(Promise.resolve());
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		const lookup1 = instance.lookupTenantId(data.domain);
+		const lookup2 = instance.lookupTenantId(data.domain);
+
+		Promise
+			.all([
+				expect(lookup1).to.eventually.equal(data.tenantId),
+				expect(lookup2).to.eventually.equal(data.tenantId)
+			])
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('does not dedupe concurrent tenant id lookups for different domains', function() {
+		// this will fail if erroneously deduped due to a nock not being satisfied
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants')
+			.query({ domain: data.domain })
+			.reply(200, [{
+				tenantId: data.tenantId,
+				domain: data.domain
+			}])
+			.get('/v1/tenants')
+			.query({ domain: 'cats' })
+			.reply(200, [{
+				tenantId: data.tenantId,
+				domain: data.domain
+			}]);
+
+		const cache = new LandlordClient.LRULandlordCache();
+		sandbox
+			.stub(cache, 'getTenantIdLookup')
+			.returns(Promise.reject(new Error('Not Found')));
+		sandbox
+			.stub(cache, 'cacheTenantIdLookup')
+			.returns(Promise.resolve());
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		const lookup1 = instance.lookupTenantId(data.domain);
+		const lookup2 = instance.lookupTenantId('cats');
+
+		return Promise
+			.all([
+				expect(lookup1).to.eventually.equal(data.tenantId),
+				expect(lookup2).to.eventually.equal(data.tenantId)
+			])
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
 	it('looks up tenant info when not cached', function() {
 		const getRequest = nock(data.endpoint)
 			.get('/v1/tenants/' + data.tenantId)
@@ -113,6 +185,84 @@ describe('LandlordClient', function() {
 			})
 			.then(function() {
 				expect(cacheTenantUrlLookupStub.calledOnce).to.be.true;
+			});
+	});
+
+	it('dedupes concurrent tenant info lookups', function() {
+		// this will fail if not deduped due to the nock only working once
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants/' + data.tenantId)
+			.reply(200, {
+				tenantId: data.tenantId,
+				domain: data.domain + '/',
+				isHttpSite: data.isHttpSite
+			}, {
+				'Cache-Control': 'max-age=' + data.maxAge
+			});
+
+		const cache = new LandlordClient.LRULandlordCache();
+		sandbox
+			.stub(cache, 'getTenantIdLookup')
+			.returns(Promise.reject(new Error('Not Found')));
+		sandbox
+			.stub(cache, 'cacheTenantIdLookup')
+			.returns(Promise.resolve());
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		const lookup1 = instance.lookupTenantUrl(data.tenantId);
+		const lookup2 = instance.lookupTenantUrl(data.tenantId);
+
+		return Promise
+			.all([
+				expect(lookup1).to.eventually.equal(data.tenantUrl),
+				expect(lookup2).to.eventually.equal(data.tenantUrl)
+			])
+			.then(function() {
+				getRequest.done();
+			});
+	});
+
+	it('does not dedupe concurrent tenant info lookups for different tenant ids', function() {
+		// this will fail if wrongly deduped due to a nock not being satisfied
+
+		const getRequest = nock(data.endpoint)
+			.get('/v1/tenants/' + data.tenantId)
+			.reply(200, {
+				tenantId: data.tenantId,
+				domain: data.domain + '/',
+				isHttpSite: data.isHttpSite
+			}, {
+				'Cache-Control': 'max-age=' + data.maxAge
+			})
+			.get('/v1/tenants/cats')
+			.reply(200, {
+				tenantId: 'cats',
+				domain: data.domain + '/',
+				isHttpSite: data.isHttpSite
+			}, {
+				'Cache-Control': 'max-age=' + data.maxAge
+			});
+
+		const cache = new LandlordClient.LRULandlordCache();
+		sandbox
+			.stub(cache, 'getTenantIdLookup')
+			.returns(Promise.reject(new Error('Not Found')));
+		sandbox
+			.stub(cache, 'cacheTenantIdLookup')
+			.returns(Promise.resolve());
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		const lookup1 = instance.lookupTenantUrl(data.tenantId);
+		const lookup2 = instance.lookupTenantUrl('cats');
+
+		return Promise
+			.all([
+				expect(lookup1).to.eventually.equal(data.tenantUrl),
+				expect(lookup2).to.eventually.equal(data.tenantUrl)
+			])
+			.then(function() {
+				getRequest.done();
 			});
 	});
 
