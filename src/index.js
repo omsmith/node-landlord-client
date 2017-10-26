@@ -160,13 +160,6 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 	return fetch;
 };
 
-LandlordClient.prototype.lookupTenantHost = function lookupTenantHost(tenantId) {
-	return this._lookupTenantInfo(tenantId)
-		.then(function(tenantInfo) {
-			return tenantInfo.domain;
-		});
-};
-
 LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri(tenantId) {
 	var self = this;
 
