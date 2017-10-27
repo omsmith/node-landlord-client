@@ -13,7 +13,8 @@ const data = {
 	scheme: 'http',
 	isHttpSite: true,
 	tenantUrl: 'http://brightspace.localhost/',
-	maxAge: 3600
+	maxAge: 3600,
+	expiry: 3600
 };
 
 const EXPECTED_USER_AGENT = `node-landlord-client/${require('../package.json').version}`;
@@ -23,6 +24,7 @@ describe('LandlordClient', function() {
 
 	beforeEach(function() {
 		sandbox = __sinon__.sandbox.create();
+		sandbox.useFakeTimers();
 	});
 
 	afterEach(function() {
@@ -175,7 +177,7 @@ describe('LandlordClient', function() {
 		const cacheTenantUrlLookupStub =
 			sandbox.stub(cache, 'cacheTenantUrlLookup');
 		cacheTenantUrlLookupStub
-			.withArgs(data.tenantId, data.tenantUrl, data.maxAge)
+			.withArgs(data.tenantId, data.tenantUrl, data.expiry)
 			.returns(Promise.resolve());
 
 		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
@@ -276,7 +278,7 @@ describe('LandlordClient', function() {
 			sandbox.stub(cache, 'getTenantUrlLookup');
 		getTenantUrlLookupStub
 			.withArgs(data.tenantId)
-			.returns(Promise.resolve(data.tenantUrl));
+			.returns(Promise.resolve({ url: data.tenantUrl, expiry: 1 }));
 		const cacheTenantUrlLookupSpy =
 			sandbox.stub(cache, 'cacheTenantUrlLookup');
 
@@ -289,6 +291,28 @@ describe('LandlordClient', function() {
 			})
 			.then(function() {
 				expect(cacheTenantUrlLookupSpy.notCalled).to.be.true;
+			});
+	});
+
+	it('uses stale cached value when tenant info lookup fails', function() {
+		const getRequest = nock(data.endpoint)
+			.get(`/v1/tenants/${data.tenantId}`)
+			.reply(502);
+
+		const cache = new LandlordClient.AbstractLandlordCache();
+		sandbox
+			.stub(cache, 'getTenantUrlLookup')
+			.withArgs(data.tenantId)
+			.returns(Promise.resolve({ url: data.tenantUrl, expiry: 1 }));
+
+		sandbox.clock.tick(2 * 1000);
+
+		const instance = new LandlordClient({ endpoint: data.endpoint, cache });
+		return expect(instance.lookupTenantUrl(data.tenantId))
+			.to.eventually
+			.equal(data.tenantUrl)
+			.then(function() {
+				getRequest.done();
 			});
 	});
 
@@ -307,7 +331,7 @@ describe('LandlordClient', function() {
 		const cacheTenantUrlLookupStub =
 			sandbox.stub(cache, 'cacheTenantUrlLookup');
 		cacheTenantUrlLookupStub
-			.withArgs(nonExistantTenantId, data.tenantUrl, data.maxAge)
+			.withArgs(nonExistantTenantId, data.tenantUrl, data.expiry)
 			.returns(Promise.reject(new Error('Not Found')));
 
 		const instance = new LandlordClient({ endpoint: data.endpoint, cache });

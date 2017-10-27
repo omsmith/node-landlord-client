@@ -163,27 +163,40 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 LandlordClient.prototype.lookupTenantUrl = function lookupTenantUri(tenantId) {
 	var self = this;
 
+	function doAndCacheLookup() {
+		return self
+			._lookupTenantInfo(tenantId)
+			.then(function(tenantInfo) {
+				var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
+				var url = protocol + '://' + tenantInfo.domain + '/';
+
+				if (null !== tenantInfo._maxAge) {
+					return self
+						._cache
+						.cacheTenantUrlLookup(tenantId, url, self._clock() + tenantInfo._maxAge)
+						.catch(function() {})
+						.then(function() { return url; });
+				}
+
+				return url;
+			});
+	}
+
 	return self
 		._cache
 		.getTenantUrlLookup(tenantId)
-		.catch(function() {
-			return self
-				._lookupTenantInfo(tenantId)
-				.then(function(tenantInfo) {
-					var protocol = tenantInfo.isHttpSite ? 'http' : 'https';
-					var url = protocol + '://' + tenantInfo.domain + '/';
+		.then(function(value) {
+			var url = value.url;
 
-					if (null !== tenantInfo._maxAge) {
-						return self
-							._cache
-							.cacheTenantUrlLookup(tenantId, url, tenantInfo._maxAge)
-							.catch(function() {})
-							.then(function() { return url; });
-					}
+			if (value.expiry <= self._clock()) {
+				return doAndCacheLookup()
+					.catch(function() {
+						return url;
+					});
+			}
 
-					return url;
-				});
-		});
+			return url;
+		}, doAndCacheLookup);
 };
 
 LandlordClient.prototype.validateConfiguration = function validateConfiguration() {
@@ -200,6 +213,10 @@ LandlordClient.prototype.validateConfiguration = function validateConfiguration(
 			});
 
 	});
+};
+
+LandlordClient.prototype._clock = function clock() {
+	return Math.round(Date.now() / 1000);
 };
 
 module.exports = LandlordClient;
