@@ -1,5 +1,9 @@
 'use strict';
 
+var http = require('http'),
+	https = require('https'),
+	url = require('url');
+
 var parseCacheControl = require('parse-cache-control'),
 	request = require('superagent');
 
@@ -34,6 +38,10 @@ function LandlordClient(opts) {
 
 	this._landlord = opts.endpoint || DEFAULT_LANDLORD_URI;
 
+	this._agent = url.parse(this._landlord).protocol === 'https:'
+		? new https.Agent({ keepAlive: true })
+		: new http.Agent({ keepAlive: true });
+
 	this._inflightSearches = new Map();
 	this._inflightFetches = new Map();
 }
@@ -56,6 +64,7 @@ LandlordClient.prototype.lookupTenantId = /* @this */ function lookupTenantId(ho
 			return new Promise(function(resolve, reject) {
 				request
 					.get(self._landlord + '/v1/tenants')
+					.agent(self._agent)
 					.set('User-Agent', self._userAgent)
 					.query({
 						domain: host
@@ -121,6 +130,7 @@ LandlordClient.prototype._lookupTenantInfo = function lookupTenantInfo(tenantId)
 
 		request
 			.get(self._landlord + '/v1/tenants/' + tenantId)
+			.agent(self._agent)
 			.set('User-Agent', self._userAgent)
 			.end(function(err, res) {
 				if (err) {
@@ -204,6 +214,7 @@ LandlordClient.prototype.validateConfiguration = function validateConfiguration(
 	return new Promise(function(resolve, reject) {
 		request
 			.get(self._landlord + '/ping')
+			.agent(self._agent)
 			.end(function(err/*, res*/) {
 				if (err) {
 					reject(new errors.LandlordNotAvailable(self._landlord, err));
